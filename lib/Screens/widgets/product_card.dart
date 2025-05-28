@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 import '../../constants/app_constants.dart';
+import '/Screens/product_model.dart'; // Add this import
 
 class ProductCard extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String price;
   final bool isWishlisted;
-  final VoidCallback? onTap;
+  final Product product; // Add this
   final VoidCallback? onWishlistTap;
 
   const ProductCard({
@@ -14,8 +17,8 @@ class ProductCard extends StatefulWidget {
     required this.imageUrl,
     required this.title,
     required this.price,
+    required this.product, // Add this
     this.isWishlisted = false,
-    this.onTap,
     this.onWishlistTap,
   });
 
@@ -26,12 +29,10 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late bool _isWishlisted;
 
   @override
   void initState() {
     super.initState();
-    _isWishlisted = widget.isWishlisted;
     _controller = AnimationController(
       duration: AppAnimations.quick,
       vsync: this,
@@ -48,26 +49,37 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
   }
 
   void _handleWishlistTap() async {
-    setState(() {
-      _isWishlisted = !_isWishlisted;
-    });
-    
-    if (_isWishlisted) {
-      _controller.forward().then((_) => _controller.reverse());
-    }
-    
+    _controller.forward().then((_) => _controller.reverse());
     widget.onWishlistTap?.call();
+  }
+
+  void _handleProductTap() {
+    try {
+      Get.toNamed(
+        '/product-details/${widget.product.id}',
+        arguments: {'product': widget.product},
+      );
+    } catch (e) {
+      print('Navigation error: $e');
+      Get.snackbar(
+        'Error',
+        'Could not open product details',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: _handleProductTap, // Update this
       child: Container(
         width: 160,
         constraints: const BoxConstraints(
-          minHeight: 300,  // Minimum height for the card
-          maxHeight: 400,  // Maximum height for the card
+          minHeight: 300,
+          maxHeight: 400,
         ),
         margin: const EdgeInsets.only(right: AppDimensions.paddingM),
         decoration: BoxDecoration(
@@ -89,15 +101,29 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
               children: [
                 // Product Image
                 AspectRatio(
-                  aspectRatio: 1,  // Square aspect ratio for image
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppDimensions.radiusL),
-                      ),
-                      image: DecorationImage(
-                        image: AssetImage(widget.imageUrl),
+                  aspectRatio: 1,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppDimensions.radiusL),
+                    ),
+                    child: Hero( // Add Hero widget for smooth transition
+                      tag: 'product_${widget.product.id}', // Unique tag for each product
+                      child: CachedNetworkImage(
+                        imageUrl: widget.imageUrl,
                         fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.error_outline,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -125,9 +151,13 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
                       child: InkWell(
                         onTap: _handleWishlistTap,
                         child: Icon(
-                          _isWishlisted ? Icons.favorite : Icons.favorite_border,
+                          widget.isWishlisted 
+                            ? Icons.favorite 
+                            : Icons.favorite_border,
                           size: 20,
-                          color: _isWishlisted ? AppColors.accent : AppColors.textLight,
+                          color: widget.isWishlisted 
+                            ? AppColors.accent 
+                            : AppColors.textLight,
                         ),
                       ),
                     ),
@@ -138,31 +168,28 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
 
             // Product Details
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingM),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        widget.title,
-                        style: AppTextStyles.productTitle,
-                        maxLines: null, // Allow multiple lines
-                        overflow: TextOverflow.visible, // Show all text
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.paddingM),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      widget.title,
+                      style: AppTextStyles.productTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppDimensions.paddingS),
+                    
+                    // Price
+                    Text(
+                      widget.price,
+                      style: AppTextStyles.price.copyWith(
+                        color: AppColors.accent,
                       ),
-                      const SizedBox(height: AppDimensions.paddingS),
-                      
-                      // Price
-                      Text(
-                        widget.price,
-                        style: AppTextStyles.price.copyWith(
-                          color: AppColors.accent,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

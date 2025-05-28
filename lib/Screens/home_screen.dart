@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:islamic_store/Screens/widgets/custom_app_silver_bar.dart';
 import '../constants/app_constants.dart';
 import 'widgets/search_overlay.dart';
 import 'widgets/category_card.dart';
@@ -10,6 +11,7 @@ import 'widgets/about_section.dart';
 import 'widgets/feature_item.dart';
 import 'widgets/custom_bottom_nav.dart';
 import 'widgets/footer.dart';
+import '../controllers/product_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final ProductController productController = Get.put(ProductController());
   bool _showSearch = false;
   final ScrollController _scrollController = ScrollController();
 
@@ -38,37 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: _scrollController,
             slivers: [
               // App Bar
-              SliverAppBar(
+               const CustomSliverAppBar(
                 floating: true,
-                backgroundColor: Colors.white,
-                elevation: 0,
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Image.asset('assets/images/logo.png'),
-                ),
-                actions: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.search,
-                      color: AppColors.primary,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showSearch = true;
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.shopping_cart_outlined,
-                      color: AppColors.primary,
-                    ),
-                    onPressed: () {
-                      // TODO: Navigate to cart
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
+                pinned: false,
               ),
 
               // Content Sections
@@ -197,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-
                     // New Arrivals Section
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -214,42 +188,31 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 16),
                           SizedBox(
                             height: 280,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: const [
-                                ProductCard(
-                                  imageUrl: 'assets/images/abaya2.jpg',
-                                  title: 'Classic Black Abaya',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/khimar2.jpg',
-                                  title: 'Classic Khimar',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/duster.jpg',
-                                  title: 'Classic Duster',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/kurti.jpg',
-                                  title: 'Classic Kurti',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/shirt.jpg',
-                                  title: 'Classic Shirt',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/borka.jpg',
-                                  title: 'Classic Borka',
-                                  price: '\$129.99',
-                                ),
-                                // Add more products...
-                              ],
-                            ),
+                            child: Obx(() {
+                              if (productController.isLoading.value) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+
+                              if (productController.newArrivals.isEmpty) {
+                                return const Center(child: Text('No new arrivals available'));
+                              }
+
+                              return ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: productController.newArrivals.length,
+                                itemBuilder: (context, index) {
+                                  final product = productController.newArrivals[index];
+                                  return ProductCard(
+                                    imageUrl: product.imageUrl,
+                                    title: product.title,
+                                    price: '\$${product.price.toStringAsFixed(2)}',
+                                    isWishlisted: product.isWishlisted,
+                                    product: product,  // Add this
+                                    onWishlistTap: () => productController.toggleWishlist(product.id),
+                                  );
+                                },
+                              );
+                            }),
                           ),
                         ],
                       ),
@@ -262,7 +225,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       subtitle: 'Up to 40% Off',
                     ),
 
-                    //best sellers
+
+                     // Islamic Quote Section
+                    const IslamicQuoteSection(),
+
+                    
+                    // Best Sellers Section
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -278,106 +246,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 16),
                           SizedBox(
                             height: 280,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: const [
-                                ProductCard(
-                                  imageUrl: 'assets/images/abaya.jpg',
-                                  title: 'Classic Black Abaya',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/khimar1.jpg',
-                                  title: 'Classic Khimar',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/duster.jpg',
-                                  title: 'Classic Duster',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/kurti.jpg',
-                                  title: 'Classic Kurti',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/shirt.jpg',
-                                  title: 'Classic Shirt',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/borka.jpg',
-                                  title: 'Classic Borka',
-                                  price: '\$129.99',
-                                ),
-                                // Add more products...
-                              ],
-                            ),
+                            child: Obx(() {
+                              if (productController.isLoading.value) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+
+                              if (productController.bestSellers.isEmpty) {
+                                return const Center(child: Text('No best sellers available'));
+                              }
+
+                              return ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: productController.bestSellers.length,
+                                itemBuilder: (context, index) {
+                                  final product = productController.bestSellers[index];
+                                  return ProductCard(
+                                    imageUrl: product.imageUrl,
+                                    title: product.title,
+                                    price: '\$${product.price.toStringAsFixed(2)}',
+                                    isWishlisted: product.isWishlisted,
+                                    product: product,  // Add this
+                                    onWishlistTap: () => productController.toggleWishlist(product.id),
+                                  );
+                                },
+                              );
+                            }),
                           ),
                         ],
                       ),
                     ),
 
-                    // Islamic Quote Section
-                    const IslamicQuoteSection(),
-
-                    //Just for user
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Just For You',
-                            style: AppTextStyles.headline.copyWith(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 280,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: const [
-                                ProductCard(
-                                  imageUrl: 'assets/images/abaya2.jpg',
-                                  title: 'Classic Black Abaya',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/khimar2.jpg',
-                                  title: 'Classic Khimar',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/duster.jpg',
-                                  title: 'Classic Duster',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/kurti.jpg',
-                                  title: 'Classic Kurti',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/shirt.jpg',
-                                  title: 'Classic Shirt',
-                                  price: '\$129.99',
-                                ),
-                                ProductCard(
-                                  imageUrl: 'assets/images/borka.jpg',
-                                  title: 'Classic Borka',
-                                  price: '\$129.99',
-                                ),
-                                // Add more products...
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                     // About Section
                     const AboutSection(),
@@ -408,3 +306,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
+
+
+
+

@@ -20,6 +20,11 @@ class AppColors {
   static const Color success = Color(0xFF388E3C);
   static const Color divider = Color(0xFFEEEEEE);
 
+  static const Color border = Color(0xFFE0E0E0);    // Light border color
+  static const Color disabled = Color(0xFFBDBDBD);   // Disabled state color
+  static const Color overlay = Color(0x1F000000);    // Overlay color for modals
+  static const Color shadow = Color(0x1A000000);
+
   // Gradients
   static final primaryGradient = LinearGradient(
     colors: [
@@ -33,7 +38,7 @@ class AppColors {
 
 class AppTextStyles {
   // Using your Google Fonts
-  static TextStyle headline = GoogleFonts.cairo(
+  static final TextStyle headline = GoogleFonts.cairo(
     fontSize: 28,
     fontWeight: FontWeight.bold,
     color: AppColors.text,
@@ -85,6 +90,13 @@ class AppTextStyles {
     color: AppColors.text,
     letterSpacing: 0.3,
   );
+
+  static TextStyle subtitle = GoogleFonts.tajawal(
+  fontSize: 14,
+  color: AppColors.textLight,
+  letterSpacing: 0.3,
+);
+
 }
 
 class AppDimensions {
@@ -125,7 +137,7 @@ class AppDecorations {
       width: 1,
     ),
     image: const DecorationImage(
-      image: AssetImage('assets/images/patterns/geometric.png'),
+      image: AssetImage('assets/images/divider.jpg'),
       opacity: 0.1,
       fit: BoxFit.cover,
     ),
